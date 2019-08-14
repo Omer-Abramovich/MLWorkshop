@@ -147,7 +147,7 @@ train_loader = torch.utils.data.DataLoader(
         num_workers=args.number_of_workers, pin_memory=args.no_pin_memory)
 
 val_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=args.shuffle,
+        val_dataset, batch_size=args.batch_size, shuffle=args.shuffle,
         num_workers=args.number_of_workers, pin_memory=args.no_pin_memory)
 
 test_loader = torch.utils.data.DataLoader(
@@ -213,6 +213,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 
             running_loss = 0.0
             running_corrects = 0
+            running_images = 0
             batch_no = 0
             
             # Iterate over data.
@@ -244,6 +245,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
+                running_images += labels.size(0)
                 batch_no += 1
                 
                 if batch_no == args.max_epoch_size:
@@ -251,8 +253,8 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 
                 
 
-            epoch_loss = running_loss / dataset_sizes[phase]
-            epoch_acc = running_corrects.double() / dataset_sizes[phase]
+            epoch_loss = running_loss / running_images
+            epoch_acc = running_corrects.double() / running_images / NUM_CLASSES
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
