@@ -46,6 +46,7 @@ parser.add_argument('--number_of_classes', type=int, default=15)
 parser.add_argument('--number_of_workers', type=int, default = 4)
 parser.add_argument('--epochs', type=int, default = 1)
 parser.add_argument('--save_path', type=str, default = 'testSaving.pth' )
+parset.add_argument('--max_epoch_size', type=int, default=0)
 
 args = parser.parse_args()
 
@@ -244,6 +245,9 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
                 batch_no += 1
+                
+                if batch_no == args.max_epoch_size:
+                    break
                 
                 
 
