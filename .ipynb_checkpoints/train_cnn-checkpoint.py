@@ -45,6 +45,7 @@ parser.add_argument('--no_pin_memory', action='store_false')
 parser.add_argument('--number_of_classes', type=int, default=15)
 parser.add_argument('--number_of_workers', type=int, default = 4)
 parser.add_argument('--epochs', type=int, default = 1)
+parser.add_argument('--save_path', type=str, default = 'testSaving.pth' )
 
 args = parser.parse_args()
 
@@ -231,7 +232,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     
                     preds = torch.round(outputs)
                     loss = criterion(outputs, labels).mean()
-                    print('batch loss', loss.item())
+                    #print('batch loss', loss.item())
 
                     # backward + optimize only if in training phase
                     if phase == 'train':
@@ -271,4 +272,5 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     return model
 
 print('Starting training')
-train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler, args.epochs)
+trained_model = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler, args.epochs)
+torch.save(trained_model.state_dict(), args.save_path)
