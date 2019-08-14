@@ -232,7 +232,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     
                     preds = torch.round(outputs)
                     loss = criterion(outputs, labels).mean()
-                    #print('batch loss', loss.item())
+                    print('batch loss', loss.item())
 
                     # backward + optimize only if in training phase
                     if phase == 'train':
