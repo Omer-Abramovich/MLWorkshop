@@ -40,8 +40,8 @@ parser.add_argument('--gamma', type=float, default=0.1)
 parser.add_argument('--step_size', type=int, default=7)
 parser.add_argument('--GPU_device', type=str, default='cuda:0')
 parser.add_argument('--use_cuda', action='store_true')
-parser.add_argument('--shuffle', action='store_false')
-parser.add_argument('--pin_memory', action='store_true')
+parser.add_argument('--shuffle', action='store_true')
+parser.add_argument('--no_pin_memory', action='store_false')
 parser.add_argument('--number_of_classes', type=int, default=15)
 parser.add_argument('--number_of_workers', type=int, default = 4)
 
@@ -141,15 +141,15 @@ test_dataset.indices.sort()
 
 train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=args.shuffle,
-        num_workers=args.number_of_workers, pin_memory=args.pin_memory)
+        num_workers=args.number_of_workers, pin_memory=args.no_pin_memory)
 
 val_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=args.shuffle,
-        num_workers=args.number_of_workers, pin_memory=args.pin_memory)
+        num_workers=args.number_of_workers, pin_memory=args.no_pin_memory)
 
 test_loader = torch.utils.data.DataLoader(
         test_dataset, batch_size=args.batch_size, shuffle=args.shuffle,
-        num_workers=args.number_of_workers, pin_memory=args.pin_memory)
+        num_workers=args.number_of_workers, pin_memory=args.no_pin_memory)
 
 device = torch.device(args.GPU_device if (args.use_cuda and torch.cuda.is_available()) else 'cpu')
 
@@ -160,6 +160,11 @@ NUM_CLASSES = args.number_of_classes
 model_ft = models.resnet18(pretrained=True)
 num_ftrs = model_ft.fc.in_features
 model_ft.fc = nn.Linear(num_ftrs, NUM_CLASSES)
+
+if torch.cuda.device_count() > 1 and args.use_cuda:
+    print ("Let's use", torch.cuda.device_count(), "GPUs!")
+    # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
+    model_ft = nn.DataParallel(model_ft)
 
 model_ft = model_ft.to(device)
 
