@@ -46,7 +46,7 @@ parser.add_argument('--number_of_classes', type=int, default=15)
 parser.add_argument('--number_of_workers', type=int, default = 4)
 parser.add_argument('--epochs', type=int, default = 1)
 parser.add_argument('--save_path', type=str, default = 'testSaving.pth' )
-parset.add_argument('--max_epoch_size', type=int, default=0)
+parser.add_argument('--max_epoch_size', type=int, default=0)
 
 args = parser.parse_args()
 
