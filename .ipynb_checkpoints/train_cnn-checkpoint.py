@@ -44,7 +44,7 @@ parser.add_argument('--shuffle', action='store_true')
 parser.add_argument('--no_pin_memory', action='store_false')
 parser.add_argument('--number_of_classes', type=int, default=15)
 parser.add_argument('--number_of_workers', type=int, default = 4)
-parser.add_arguments('--epochs', type=int, default = 1)
+parser.add_argument('--epochs', type=int, default = 1)
 
 args = parser.parse_args()
 
