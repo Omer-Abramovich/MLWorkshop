@@ -151,10 +151,6 @@ test_loader = torch.utils.data.DataLoader(
         test_dataset, batch_size=args.batch_size, shuffle=args.shuffle,
         num_workers=args.number_of_workers, pin_memory=args.pin_memory)
 
-train_dataset.indices = train_dataset.indices.sort()
-val_dataset.indices = val_dataset.indices.sort()
-test_dataset.indices = test_dataset.indices.sort()
-
 device = torch.device(args.GPU_device if (args.use_cuda and torch.cuda.is_available()) else 'cpu')
 
 
