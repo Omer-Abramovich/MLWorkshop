@@ -199,6 +199,8 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
 
+    idx = 0
+    
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
@@ -234,7 +236,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     
                     preds = torch.round(outputs)
                     loss = criterion(outputs, labels).mean()
-                    print('batch loss', loss.item())
+                    #print('batch loss', loss.item())
 
                     # backward + optimize only if in training phase
                     if phase == 'train':
@@ -251,21 +253,27 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 if batch_no == args.max_epoch_size:
                     break
                 
-                
+                if phase == 'train' and idx % 100 == 0:
+                    epoch_loss = running_loss / running_images
+                    epoch_acc = running_corrects.double() / running_images / NUM_CLASSES
 
-            epoch_loss = running_loss / running_images
-            epoch_acc = running_corrects.double() / running_images / NUM_CLASSES
+                    print('{} Loss: {:.4f} Acc: {:.4f}'.format(
+                        phase, epoch_loss, epoch_acc))
 
-            print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-                phase, epoch_loss, epoch_acc))
+                    torch.save(model, args.save_path+'.'+str(idx))
+                    idx+=1
             
-            torch.save(model, args.save_path+'.'+str(epoch))
-            
-            # deep copy the model
-            if phase == 'val' and epoch_acc > best_acc:
-                best_acc = epoch_acc
-                best_model_wts = copy.deepcopy(model.state_dict())
-            
+            if phase == 'val':
+                    epoch_loss = running_loss / running_images
+                    epoch_acc = running_corrects.double() / running_images / NUM_CLASSES
+
+                    print('{} Loss: {:.4f} Acc: {:.4f}'.format(
+                        phase, epoch_loss, epoch_acc))
+
+                    # deep copy the model
+                    if phase == 'val' and epoch_acc > best_acc:
+                        best_acc = epoch_acc
+                        best_model_wts = copy.deepcopy(model.state_dict())
             
 
         print()
