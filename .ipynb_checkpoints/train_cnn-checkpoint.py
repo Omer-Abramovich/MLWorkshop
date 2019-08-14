@@ -215,7 +215,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             
             # Iterate over data.
             for data in dataloaders[phase]:
-                print('loaded data')
+                #print('loaded data')
                 inputs, labels = data
                 
                 inputs = inputs.to(device)
@@ -237,15 +237,14 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
-                        print('trained')
+                        #print('trained')
 
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
                 batch_no += 1
                 
-                if batch_no == 10:
-                    break
+                
 
             epoch_loss = running_loss / dataset_sizes[phase]
             epoch_acc = running_corrects.double() / dataset_sizes[phase]
@@ -258,7 +257,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
             
-            break
+            
 
         print()
 
