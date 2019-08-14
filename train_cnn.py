@@ -135,9 +135,9 @@ test_len = len(dataset) - train_len - val_len
 
 train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_len, val_len, test_len])
 
-train_dataset.indices = train_dataset.indices.sort()
-val_dataset.indices = val_dataset.indices.sort()
-test_dataset.indices = test_dataset.indices.sort()
+train_dataset.indices.sort()
+val_dataset.indices.sort()
+test_dataset.indices.sort()
 
 train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=args.shuffle,
