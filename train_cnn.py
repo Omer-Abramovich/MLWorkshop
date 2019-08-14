@@ -187,9 +187,9 @@ dataloaders = {
 }
 
 dataset_sizes = {
-    'train': len(train_loader),
-    'val': len(val_loader),
-    'test': len(test_loader),
+    'train': len(train_dataset),
+    'val': len(val_dataset),
+    'test': len(test_dataset),
 }
 
 def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
