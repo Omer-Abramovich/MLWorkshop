@@ -67,6 +67,11 @@ class VideoDataset(torch.utils.data.Dataset):
         self.video = None
         self.targets = None
         
+        self.save = True
+        if os.path.exists('cumulative_lengths.pth'):
+            self.cumulative_lengths = torch.load('cumulative_lengths.pth')
+            self.save = False
+        
         for x in Path(base_path).glob(args.video_path):
             path_str = str(x)
             print(path_str)
@@ -75,19 +80,22 @@ class VideoDataset(torch.utils.data.Dataset):
             self.video_files.append(path_str)
             self.target_files.append(target_path)
             
-            video = moviepy.editor.VideoFileClip(path_str)
-            frames = math.floor(video.duration * video.fps)
-            if len(self.cumulative_lengths)>0:
-                self.cumulative_lengths.append(self.cumulative_lengths[-1] + frames)                
-            else:
-                self.cumulative_lengths.append(frames)
+            if self.save:
+                video = moviepy.editor.VideoFileClip(path_str)
+                frames = math.floor(video.duration * video.fps)
+                if len(self.cumulative_lengths)>0:
+                    self.cumulative_lengths.append(self.cumulative_lengths[-1] + frames)                
+                else:
+                    self.cumulative_lengths.append(frames)
+        if self.save:
+            torch.save(self.cumulative_lengths, 'cumulative_lengths.pth')
     
     def load_video_if_needed(self, index):
         if not (self.video_index is not None and index < self.cumulative_lengths[self.video_index] and \
                 (self.video_index == 0 or index > self.cumulative_lengths[self.video_index-1])):
             for self.video_index in range(len(self.cumulative_lengths)):
-                if index < self.cumulative_lengths[self.video_index] and (self.video_index == 0 or index > self.cumulative_lengths[self.video_index-1]):
-                    print('Loading video',self.video_index)
+                if index < self.cumulative_lengths[self.video_index] and (self.video_index == 0 or index >= self.cumulative_lengths[self.video_index-1]):
+                    #print('Loading video',self.video_index)
                     self.video = moviepy.editor.VideoFileClip(self.video_files[self.video_index])
                     self.targets = torch.load(self.target_files[self.video_index]).float()
                     break
@@ -138,9 +146,19 @@ test_len = len(dataset) - train_len - val_len
 
 train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_len, val_len, test_len])
 
-train_dataset.indices.sort()
-val_dataset.indices.sort()
-test_dataset.indices.sort()
+if os.path.exists('train_dataset_indices.pth'):
+    train_dataset.indices = torch.load('train_dataset_indices.pth')
+    val_dataset.indices = torch.load('val_dataset_indices.pth')
+    test_dataset.indices = torch.load('test_dataset_indices.pth')
+else:
+    train_dataset.indices.sort()
+    val_dataset.indices.sort()
+    test_dataset.indices.sort()
+    
+    torch.save(train_dataset.indices, 'train_dataset_indices.pth')
+    torch.save(val_dataset.indices, 'val_dataset_indices.pth')
+    torch.save(test_dataset.indices, 'test_dataset_indices.pth')
+
 
 train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=args.shuffle,
@@ -253,27 +271,23 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 if batch_no == args.max_epoch_size:
                     break
                 
-                if phase == 'train' and idx % 100 == 0:
+                if idx % 10 == 0:
                     epoch_loss = running_loss / running_images
                     epoch_acc = running_corrects.double() / running_images / NUM_CLASSES
 
                     print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                         phase, epoch_loss, epoch_acc))
 
-                    torch.save(model, args.save_path+'.'+str(idx))
-                    idx+=1
+                    if phase == 'train':
+                        torch.save(model, args.save_path+'.'+str(idx))
+                idx+=1
             
-            if phase == 'val':
-                    epoch_loss = running_loss / running_images
-                    epoch_acc = running_corrects.double() / running_images / NUM_CLASSES
-
-                    print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-                        phase, epoch_loss, epoch_acc))
-
-                    # deep copy the model
-                    if phase == 'val' and epoch_acc > best_acc:
-                        best_acc = epoch_acc
-                        best_model_wts = copy.deepcopy(model.state_dict())
+            # deep copy the model
+            if phase == 'val' and epoch_acc > best_acc:
+                best_acc = epoch_acc
+                best_model_wts = copy.deepcopy(model.state_dict())
+                
+                
             
 
         print()
