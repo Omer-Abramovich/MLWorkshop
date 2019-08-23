@@ -51,6 +51,7 @@ args = parser.parse_args()
 
 if not args.frames and not args.audio:
     print("Atleast one input type (frames/audio) must be set!")
+    exit(0)
         
 class VideoDataset(torch.utils.data.Dataset):
     
@@ -276,7 +277,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 
                 if args.frames and args.audio:
                     inputs = torch.cat((frame,audio),1)
-                elif args.frame:
+                elif args.frames:
                     inputs = frame
                 elif args.audio:
                     inputs = audio
