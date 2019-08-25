@@ -86,7 +86,7 @@ def test_model(model):
     class_false_positives = torch.zeros(NUM_CLASSES)
     class_false_negatives = torch.zeros(NUM_CLASSES)
 
-    confusion_matrix = torch.zeros(NUM_CLASSES, NUM_CLASSES)
+    confusion_matrix = torch.zeros(NUM_CLASSES, 2, 2)
 
     total_frames = 0
     with torch.no_grad():
@@ -111,7 +111,7 @@ def test_model(model):
 
             for cls in range(NUM_CLASSES):
                 for t, p in zip(preds[:, cls], preds[:, cls]):
-                    confusion_matrix[t.long(), p.long()] += 1
+                    confusion_matrix[cls, t.long(), p.long()] += 1
 
             # for i in range(NUM_CLASSES):
             #     if labels[i] == 1:
