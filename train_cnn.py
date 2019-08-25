@@ -26,9 +26,6 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Cnn v.1')
 parser.add_argument('--base_path', type=str, default='/data/ml_workshop_small')
-parser.add_argument('--video_path', type=str, default='**/Infant/*.mp4')
-parser.add_argument('--delimiter', type=str, default='/')
-parser.add_argument('--target_path', type=str, default='/Targets.pth')
 parser.add_argument('--scale_size', type=int, default=256)
 parser.add_argument('--crop_size', type=int, default=224)
 parser.add_argument('--train_portion', type=float, default=0.8)
@@ -47,11 +44,15 @@ parser.add_argument('--number_of_workers', type=int, default = 4)
 parser.add_argument('--epochs', type=int, default = 1)
 parser.add_argument('--save_path', type=str, default = 'testSaving.pth' )
 parser.add_argument('--max_epoch_size', type=int, default=0)
+parser.add_argument('--frames', action='store_true')
+parser.add_argument('--audio', action='store_true')
 
 args = parser.parse_args()
 
-
-
+if not args.frames and not args.audio:
+    print("Atleast one input type (frames/audio) must be set!")
+    exit(0)
+        
 class VideoDataset(torch.utils.data.Dataset):
     
     def __init__(self, base_path, transform=None):
@@ -60,6 +61,7 @@ class VideoDataset(torch.utils.data.Dataset):
         
         self.video_files = []
         self.target_files = []
+        self.audio_files = []
         
         self.cumulative_lengths = []
         self.video_index = None
@@ -70,25 +72,35 @@ class VideoDataset(torch.utils.data.Dataset):
         self.save = True
         if os.path.exists('cumulative_lengths.pth'):
             self.cumulative_lengths = torch.load('cumulative_lengths.pth')
+            self.video_files = torch.load('video_files.pth')
+            self.audio_files = torch.load('audio_files.pth')
+            self.target_files = torch.load('target_files.pth')
             self.save = False
         
-        for x in Path(base_path).glob(args.video_path):
-            path_str = str(x)
-            print(path_str)
-            target_path = '/'.join(path_str.split('/')[:-1]) + args.target_path
-            
-            self.video_files.append(path_str)
-            self.target_files.append(target_path)
-            
-            if self.save:
+        if self.save:
+            print('Scanning for files...')
+            for x in Path(base_path).glob('**/Infant/resized.mp4'):
+                path_str = str(x)
+                print(path_str)
+                target_path = '/'.join(path_str.split('/')[:-1]) + '/Targets.pth'
+                audio_path = '/'.join(path_str.split('/')[:-1]) + '/audio.pth'
+
+                self.video_files.append(path_str)
+                self.audio_files.append(audio_path)
+                self.target_files.append(target_path)
+
                 video = moviepy.editor.VideoFileClip(path_str)
+                target = torch.load(target_path)
+                video.fps = target.size(0) / video.duration
                 frames = math.floor(video.duration * video.fps)
                 if len(self.cumulative_lengths)>0:
                     self.cumulative_lengths.append(self.cumulative_lengths[-1] + frames)                
                 else:
                     self.cumulative_lengths.append(frames)
-        if self.save:
             torch.save(self.cumulative_lengths, 'cumulative_lengths.pth')
+            torch.save(self.video_files, 'video_files.pth')
+            torch.save(self.audio_files, 'audio_files.pth')
+            torch.save(self.target_files, 'target_files.pth')
     
     def load_video_if_needed(self, index):
         if not (self.video_index is not None and index < self.cumulative_lengths[self.video_index] and \
@@ -98,6 +110,17 @@ class VideoDataset(torch.utils.data.Dataset):
                     #print('Loading video',self.video_index)
                     self.video = moviepy.editor.VideoFileClip(self.video_files[self.video_index])
                     self.targets = torch.load(self.target_files[self.video_index]).float()
+                    self.video.fps = self.targets.size(0) / self.video.duration
+
+                    
+                    audio_trans = transforms.Compose([
+                        transforms.ToPILImage(),
+                        transforms.Scale((self.targets.size(0), args.crop_size)),
+                        transforms.ToTensor()
+                    ])
+                    
+                    a = torch.load(self.audio_files[self.video_index]).float()
+                    self.audio = audio_trans(a.mean(0))
                     break
     
     def __getitem__(self, index):
@@ -105,8 +128,7 @@ class VideoDataset(torch.utils.data.Dataset):
         if self.video_index > 0:
             frame_no = index - self.cumulative_lengths[self.video_index-1]
         else:
-            frame_no = index    
-        
+            frame_no = index
         frame = self.video.get_frame(frame_no / self.video.fps)
         frame = Image.fromarray(frame.astype('uint8'), 'RGB')
         
@@ -114,15 +136,21 @@ class VideoDataset(torch.utils.data.Dataset):
             frame = self.transform(frame)
         
         target = self.targets[frame_no]
+        audio = torch.zeros(1,args.crop_size,args.crop_size)
+        half = int(args.crop_size / 2)
+        if frame_no < half:
+            audio[:,half-frame_no:] = self.audio[:,:half+frame_no]
+        if frame_no>=half and frame_no + half < self.audio.size(1):
+            audio = self.audio[:,frame_no-half:frame_no+half]
+        if frame_no + half >= self.audio.size(1):
+            delta = self.audio.size(1) - frame_no
+            audio[:, :half+delta] = self.audio[:,frame_no-half:]
         
-        return frame, target
-        
+        return frame, audio, target
         
         
     def __len__(self):
         return int(self.cumulative_lengths[-1])
-        
-
 
 
 
@@ -179,6 +207,12 @@ print('Creating model')
 NUM_CLASSES = args.number_of_classes
 
 model_ft = models.resnet18(pretrained=True)
+
+if args.frames and args.audio:
+    model_ft.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+elif args.audio:
+    model_ft.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+
 num_ftrs = model_ft.fc.in_features
 model_ft.fc = nn.Linear(num_ftrs, NUM_CLASSES)
 
@@ -239,9 +273,20 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             # Iterate over data.
             for data in dataloaders[phase]:
                 #print('loaded data')
-                inputs, labels = data
+                frame, audio, labels = data
                 
-                inputs = inputs.to(device)
+                if args.frames:
+                    frame = frame.to(device)
+                if args.audio:
+                    audio = audio.to(device)
+                
+                if args.frames and args.audio:
+                    inputs = torch.cat((frame,audio),1)
+                elif args.frames:
+                    inputs = frame
+                elif args.audio:
+                    inputs = audio
+                
                 labels = labels.to(device)
 
                 # zero the parameter gradients
@@ -278,7 +323,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                         phase, epoch_loss, epoch_acc))
 
-                    if phase == 'train':
+                    if phase == 'train' and idx % 1000 == 0:
                         torch.save(model, args.save_path+'.'+str(idx))
                 idx+=1
             
@@ -286,9 +331,9 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
-                
-                
             
+            if phase == 'train':
+                torch.save(model, args.save_path+'.epoch.'+str(epoch))
 
         print()
 
