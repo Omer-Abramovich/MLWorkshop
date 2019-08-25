@@ -106,6 +106,9 @@ def test_model(model):
             preds = torch.round(outputs)
             preds = preds.cpu()
 
+            print(preds)
+            print(labels)
+
             class_correct += (preds == labels).sum(0)
 
             class_positives += labels
