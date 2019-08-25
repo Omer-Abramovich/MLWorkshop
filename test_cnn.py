@@ -102,10 +102,9 @@ def test_model(model):
             elif args.audio:
                 inputs = audio
 
-            labels = labels.to(device)
-
             outputs = act(model(inputs))
             preds = torch.round(outputs)
+            preds = preds.cpu()
 
             class_correct += (preds == labels).sum(0)
 
@@ -127,6 +126,8 @@ def test_model(model):
             #         class_correct_negatives += (preds[i] == 0)
             #         class_false_positives += (preds[i] == 1)
             total_frames += args.batch_size
+
+            print("frames", total_frames)
 
     for label in range(NUM_CLASSES):
         print('Accuracy of label %1d : %2d %%' % (
