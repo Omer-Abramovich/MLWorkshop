@@ -1,13 +1,6 @@
 import os
-import sys
-import math
 import time
 import copy
-from pathlib import Path
-
-import moviepy.editor
-import numpy as np
-from PIL import Image
 
 import torch
 import torch.nn as nn
@@ -16,10 +9,6 @@ from torch.optim import lr_scheduler
 
 from torchvision import datasets, models, transforms
 import torchvision.transforms as transforms
-
-import torchvision
-
-import matplotlib.pyplot as plt
 
 import argparse
 

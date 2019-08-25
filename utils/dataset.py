@@ -1,9 +1,15 @@
 import torch
+import os
+from pathlib import Path
+import moviepy.editor
+from PIL import Image
+from torchvision import datasets, models, transforms
 
 class VideoDataset(torch.utils.data.Dataset):
 
-    def __init__(self, base_path, transform=None):
+    def __init__(self, base_path, args, transform=None):
         self.base_path = base_path
+        self.args = args
         self.transform = transform
 
         self.video_files = []
@@ -62,7 +68,7 @@ class VideoDataset(torch.utils.data.Dataset):
 
                     audio_trans = transforms.Compose([
                         transforms.ToPILImage(),
-                        transforms.Scale((self.targets.size(0), args.crop_size)),
+                        transforms.Scale((self.targets.size(0), self.args.crop_size)),
                         transforms.ToTensor()
                     ])
 
@@ -83,8 +89,8 @@ class VideoDataset(torch.utils.data.Dataset):
             frame = self.transform(frame)
 
         target = self.targets[frame_no]
-        audio = torch.zeros(1, args.crop_size, args.crop_size)
-        half = int(args.crop_size / 2)
+        audio = torch.zeros(1, self.args.crop_size, self.args.crop_size)
+        half = int(self.args.crop_size / 2)
         if frame_no < half:
             audio[:, half - frame_no:] = self.audio[:, :half + frame_no]
         if frame_no >= half and frame_no + half < self.audio.size(1):
