@@ -79,7 +79,7 @@ class VideoDataset(torch.utils.data.Dataset):
         
         if self.save:
             print('Scanning for files...')
-            for x in Path(base_path).glob('**/Infant/*.mp4'):
+            for x in Path(base_path).glob('**/Infant/resized.mp4'):
                 path_str = str(x)
                 print(path_str)
                 target_path = '/'.join(path_str.split('/')[:-1]) + '/Targets.pth'
@@ -128,8 +128,7 @@ class VideoDataset(torch.utils.data.Dataset):
         if self.video_index > 0:
             frame_no = index - self.cumulative_lengths[self.video_index-1]
         else:
-            frame_no = index    
-        
+            frame_no = index
         frame = self.video.get_frame(frame_no / self.video.fps)
         frame = Image.fromarray(frame.astype('uint8'), 'RGB')
         
@@ -208,6 +207,12 @@ print('Creating model')
 NUM_CLASSES = args.number_of_classes
 
 model_ft = models.resnet18(pretrained=True)
+
+if args.frames and args.audio:
+    model_ft.conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+elif args.audio:
+    model_ft.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+
 num_ftrs = model_ft.fc.in_features
 model_ft.fc = nn.Linear(num_ftrs, NUM_CLASSES)
 
@@ -318,7 +323,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                         phase, epoch_loss, epoch_acc))
 
-                    if phase == 'train':
+                    if phase == 'train' and idx % 1000 == 0:
                         torch.save(model, args.save_path+'.'+str(idx))
                 idx+=1
             
@@ -326,9 +331,9 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
-                
-                
             
+            if phase == 'train':
+                torch.save(model, args.save_path+'.epoch.'+str(epoch))
 
         print()
 
