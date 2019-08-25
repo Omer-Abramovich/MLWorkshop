@@ -126,27 +126,29 @@ def test_model(model):
 
             print("frames", total_frames)
 
+    torch.save(confusion_matrix, 'confusion_matrix.pth')
+
     for label in range(NUM_CLASSES):
         print('Accuracy of label %1d : %2d %%' % (
             label, 100 * class_correct[label] / total_frames))
 
     for label in range(NUM_CLASSES):
         print('Correct Positives for label %1d : %2d %%' % (
-            label, 100 * class_correct_positives[label] / class_positives))
+            label, 100 * class_correct_positives[label] / class_positives[label]))
 
     for label in range(NUM_CLASSES):
         print('False Positives for label %1d : %2d %%' % (
-            label, 100 * class_false_positives[label] / class_negatives))
+            label, 100 * class_false_positives[label] / class_negatives[label]))
 
     for label in range(NUM_CLASSES):
         print('Correct negatives for label %1d : %2d %%' % (
-            label, 100 * class_correct_negatives[label] / class_negatives))
+            label, 100 * class_correct_negatives[label] / class_negatives[label]))
 
     for label in range(NUM_CLASSES):
         print('False Negatives for label %1d : %2d %%' % (
-            label, 100 * class_false_negatives[label] / class_positives))
+            label, 100 * class_false_negatives[label] / class_positives[label]))
 
-    torch.save(confusion_matrix, 'confusion_matrix.pth')
+
 
 
 test_model(model)
