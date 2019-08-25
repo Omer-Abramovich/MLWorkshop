@@ -49,7 +49,7 @@ transform = transforms.Compose([
     normalize
 ])
 
-dataset = utils.dataset.VideoDataset(args.base_path, transform)
+dataset = utils.dataset.VideoDataset(args.base_path, args, transform)
 
 train_len = int(args.train_portion * len(dataset))
 val_len = int(args.validation_portion * len(dataset))
