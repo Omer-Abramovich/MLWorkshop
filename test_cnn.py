@@ -24,9 +24,9 @@ parser.add_argument('--use_cuda', action='store_true')
 parser.add_argument('--shuffle', action='store_true')
 parser.add_argument('--no_pin_memory', action='store_false')
 parser.add_argument('--number_of_classes', type=int, default=15)
-parser.add_argument('--number_of_workers', type=int, default = 4)
-parser.add_argument('--epochs', type=int, default = 1)
-parser.add_argument('--save_path', type=str, default = 'testSaving.pth' )
+parser.add_argument('--number_of_workers', type=int, default=4)
+parser.add_argument('--epochs', type=int, default=1)
+parser.add_argument('--save_path', type=str, default='testSaving.pth')
 parser.add_argument('--max_epoch_size', type=int, default=0)
 parser.add_argument('--frames', action='store_true')
 parser.add_argument('--audio', action='store_true')
@@ -40,10 +40,10 @@ model = torch.load(args.load_path)
 act = torch.nn.Sigmoid().to(device)
 
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
+                                 std=[0.229, 0.224, 0.225])
 transform = transforms.Compose([
     transforms.Scale(args.scale_size),
-    #transforms.RandomRotation(10),
+    # transforms.RandomRotation(10),
     transforms.RandomCrop(args.crop_size),
     transforms.ToTensor(),
     normalize
@@ -73,8 +73,9 @@ else:
 NUM_CLASSES = args.number_of_classes
 
 test_loader = torch.utils.data.DataLoader(
-        test_dataset, batch_size=args.batch_size, shuffle=args.shuffle,
-        num_workers=args.number_of_workers, pin_memory=args.no_pin_memory)
+    test_dataset, batch_size=args.batch_size, shuffle=args.shuffle,
+    num_workers=args.number_of_workers, pin_memory=args.no_pin_memory)
+
 
 def test_model(model):
     class_correct = torch.zeros(NUM_CLASSES)
@@ -84,6 +85,8 @@ def test_model(model):
     class_negatives = torch.zeros(NUM_CLASSES)
     class_false_positives = torch.zeros(NUM_CLASSES)
     class_false_negatives = torch.zeros(NUM_CLASSES)
+
+    confusion_matrix = torch.zeros(NUM_CLASSES, NUM_CLASSES)
 
     total_frames = 0
     with torch.no_grad():
@@ -106,18 +109,9 @@ def test_model(model):
             preds = torch.round(outputs)
             preds = preds.cpu()
 
-            print(preds)
-            print(labels)
-
-            class_correct += (preds == labels).sum(0)
-
-            class_positives += labels
-            class_correct_positives += ((preds==1) and (labels==1)).sum(0)
-            class_false_negatives += ((preds==0) and (labels==1)).sum(0)
-
-            class_negatives += (1-labels).sum(0)
-            class_correct_negatives += ((preds == 0) and (labels == 0)).sum(0)
-            class_false_positives += ((preds == 1) and (labels == 0)).sum(0)
+            for cls in range(NUM_CLASSES):
+                for t, p in zip(preds[:, cls], preds[:, cls]):
+                    confusion_matrix[t.long(), p.long()] += 1
 
             # for i in range(NUM_CLASSES):
             #     if labels[i] == 1:
