@@ -146,5 +146,7 @@ def test_model(model):
         print('False Negatives for label %1d : %2d %%' % (
             label, 100 * class_false_negatives[label] / class_positives))
 
+    torch.save(confusion_matrix, 'confusion_matrix.pth')
+
 
 test_model(model)
