@@ -107,15 +107,15 @@ def test_model(model):
             outputs = act(model(inputs))
             preds = torch.round(outputs)
 
-            class_correct += (preds == labels)
+            class_correct += (preds == labels).sum(0)
 
             class_positives += labels
-            class_correct_positives += (preds==1) and (labels==1)
-            class_false_negatives += (preds==0) and (labels==1)
+            class_correct_positives += ((preds==1) and (labels==1)).sum(0)
+            class_false_negatives += ((preds==0) and (labels==1)).sum(0)
 
-            class_negatives += 1-labels
-            class_correct_negatives += (preds == 0) and (labels == 0)
-            class_false_positives += (preds == 1) and (labels == 0)
+            class_negatives += (1-labels).sum(0)
+            class_correct_negatives += ((preds == 0) and (labels == 0)).sum(0)
+            class_false_positives += ((preds == 1) and (labels == 0)).sum(0)
 
             # for i in range(NUM_CLASSES):
             #     if labels[i] == 1:
@@ -126,7 +126,7 @@ def test_model(model):
             #         class_negatives[i] += 1
             #         class_correct_negatives += (preds[i] == 0)
             #         class_false_positives += (preds[i] == 1)
-            total_frames += 1
+            total_frames += args.batch_size
 
     for label in range(NUM_CLASSES):
         print('Accuracy of label %1d : %2d %%' % (
