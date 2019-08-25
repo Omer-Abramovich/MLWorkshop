@@ -77,13 +77,13 @@ test_loader = torch.utils.data.DataLoader(
         num_workers=args.number_of_workers, pin_memory=args.no_pin_memory)
 
 def test_model(model):
-    class_correct = list(0. for i in range(NUM_CLASSES))
-    class_positives = list(0. for i in range(NUM_CLASSES))
-    class_correct_positives = list(0. for i in range(NUM_CLASSES))
-    class_correct_negatives = list(0. for i in range(NUM_CLASSES))
-    class_negatives = list(0. for i in range(NUM_CLASSES))
-    class_false_positives = list(0. for i in range(NUM_CLASSES))
-    class_false_negatives = list(0. for i in range(NUM_CLASSES))
+    class_correct = torch.zeros(NUM_CLASSES)
+    class_positives = torch.zeros(NUM_CLASSES)
+    class_correct_positives = torch.zeros(NUM_CLASSES)
+    class_correct_negatives = torch.zeros(NUM_CLASSES)
+    class_negatives = torch.zeros(NUM_CLASSES)
+    class_false_positives = torch.zeros(NUM_CLASSES)
+    class_false_negatives = torch.zeros(NUM_CLASSES)
 
     total_frames = 0
     with torch.no_grad():
