@@ -1,6 +1,13 @@
 import os
+import sys
+import math
 import time
 import copy
+from pathlib import Path
+
+import moviepy.editor
+import numpy as np
+from PIL import Image
 
 import torch
 import torch.nn as nn
@@ -9,6 +16,10 @@ from torch.optim import lr_scheduler
 
 from torchvision import datasets, models, transforms
 import torchvision.transforms as transforms
+
+import torchvision
+
+import matplotlib.pyplot as plt
 
 import argparse
 
@@ -57,7 +68,7 @@ transform = transforms.Compose([
 
 
 print('Creating dataset')
-dataset = utils.dataset.VideoDataset(args.base_path, transform)
+dataset = utils.dataset.VideoDataset(args.base_path, args, transform)
 
 
 
@@ -80,6 +91,28 @@ else:
     torch.save(val_dataset.indices, 'val_dataset_indices.pth')
     torch.save(test_dataset.indices, 'test_dataset_indices.pth')
 
+print('Counting targets')
+
+target_tensors = []
+for target_file in dataset.target_files:
+    target_tensors.append(torch.load(target_file))
+all_targets = torch.cat(target_tensors, 0)
+
+print(all_targets.size())
+
+counts = all_targets.sum(0).float()
+
+print(counts)
+
+wights = torch.zeros(all_targets.size(1), 2)
+wights[:,0] = (1/(all_targets.size(0)-counts))
+wights[:,1] = (1/counts)
+
+norm = wights.sum(1).unsqueeze(1).expand((wights.size(0),2))
+
+wights = wights / norm
+
+print(wights)
 
 train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=args.shuffle,
@@ -95,6 +128,7 @@ test_loader = torch.utils.data.DataLoader(
 
 device = torch.device(args.GPU_device if (args.use_cuda and torch.cuda.is_available()) else 'cpu')
 
+wights = wights.to(device)
 
 print('Creating model')
 NUM_CLASSES = args.number_of_classes
@@ -191,7 +225,11 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     outputs = act(model(inputs))
                     
                     preds = torch.round(outputs)
-                    loss = criterion(outputs, labels).mean()
+                    loss = criterion(outputs, labels)
+                    
+                    merged_weights = (labels == 0).float() * wights[:,0] + (labels == 1).float() * wights[:,1]
+                    loss = loss * merged_weights
+                    loss = loss.mean()
                     #print('batch loss', loss.item())
 
                     # backward + optimize only if in training phase

@@ -110,18 +110,20 @@ def test_model(model):
             preds = preds.cpu()
 
             for cls in range(NUM_CLASSES):
-                for t, p in zip(preds[:, cls], preds[:, cls]):
-                    confusion_matrix[cls, t.long(), p.long()] += 1
+                for i in range(preds.size(0)):
+                    confusion_matrix[cls, labels[i, cls].long(), preds[i,cls].long()] += 1
 
-            # for i in range(NUM_CLASSES):
-            #     if labels[i] == 1:
-            #         class_positives[i] += 1
-            #         class_correct_positives += (preds[i] == 1)
-            #         class_false_negatives += (preds[i] == 0)
-            #     else:
-            #         class_negatives[i] += 1
-            #         class_correct_negatives += (preds[i] == 0)
-            #         class_false_positives += (preds[i] == 1)
+            for label in range(NUM_CLASSES):
+                for i in range(preds.size(0)):
+                    class_correct[label] += (preds[i,label] == labels[i,label])
+                    if labels[i,label] == 1:
+                        class_positives[label] += 1
+                        class_correct_positives[label] += (preds[i,label] == 1)
+                        class_false_negatives[label] += (preds[i,label] == 0)
+                    else:
+                        class_negatives[label] += 1
+                        class_correct_negatives[label] += (preds[i,label] == 0)
+                        class_false_positives[label] += (preds[i,label] == 1)
             total_frames += args.batch_size
 
             print("frames", total_frames)
@@ -134,19 +136,19 @@ def test_model(model):
 
     for label in range(NUM_CLASSES):
         print('Correct Positives for label %1d : %2d %%' % (
-            label, 100 * class_correct_positives[label] / class_positives[label]))
+            label, 100 * class_correct_positives[label] / max(1,class_positives[label])))
 
     for label in range(NUM_CLASSES):
         print('False Positives for label %1d : %2d %%' % (
-            label, 100 * class_false_positives[label] / class_negatives[label]))
+            label, 100 * class_false_positives[label] / max(1,class_negatives[label])))
 
     for label in range(NUM_CLASSES):
         print('Correct negatives for label %1d : %2d %%' % (
-            label, 100 * class_correct_negatives[label] / class_negatives[label]))
+            label, 100 * class_correct_negatives[label] / max(1,class_negatives[label])))
 
     for label in range(NUM_CLASSES):
         print('False Negatives for label %1d : %2d %%' % (
-            label, 100 * class_false_negatives[label] / class_positives[label]))
+            label, 100 * class_false_negatives[label] / max(1,class_positives[label])))
 
 
 
