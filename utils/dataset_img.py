@@ -24,8 +24,7 @@ class VideoDataset(torch.utils.data.Dataset):
         self.targets = None
 
         self.save = True
-        if os.path.exists('cumulative_lengths.pth'):
-            self.cumulative_lengths = torch.load('cumulative_lengths.pth')
+        if os.path.exists('video_files.pth'):
             self.video_files = torch.load('video_files.pth')
             self.audio_files = torch.load('audio_files.pth')
             self.target_files = torch.load('target_files.pth')
@@ -47,11 +46,6 @@ class VideoDataset(torch.utils.data.Dataset):
                 target = torch.load(target_path)
                 video.fps = target.size(0) / video.duration
                 frames = math.floor(video.duration * video.fps)
-                if len(self.cumulative_lengths) > 0:
-                    self.cumulative_lengths.append(self.cumulative_lengths[-1] + frames)
-                else:
-                    self.cumulative_lengths.append(frames)
-            torch.save(self.cumulative_lengths, 'cumulative_lengths.pth')
             torch.save(self.video_files, 'video_files.pth')
             torch.save(self.audio_files, 'audio_files.pth')
             torch.save(self.target_files, 'target_files.pth')
