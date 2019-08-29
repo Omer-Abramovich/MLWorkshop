@@ -85,18 +85,26 @@ counts = all_targets.sum(0).float()
 
 print(counts)
 
-wights = torch.zeros(all_targets.size(1), 2)
-wights[:, 0] = (1 / (all_targets.size(0) - counts))
-wights[:, 1] = (1 / counts)
+prob = torch.zeros(all_targets.size(1), 2)
+prob[:, 0] = (1 - (counts / all_targets.size(0)))
+prob[:, 1] = (counts / all_targets.size(0))
 
-norm = wights.sum(1).unsqueeze(1).expand((wights.size(0), 2))
+print(prob)
 
-wights = wights / norm
+reciprocal_weights = []
+# class[i] = list containing class present at index i in the dataset
+for index in range(len(train_dataset)):
+    frame, audio, target = train_dataset[index]
+    total_prob = 1
+    for label in range(all_targets.size(1)):
+        total_prob *= prob[label, target[label]]
+    reciprocal_weights.append(total_prob)
 
-print(wights)
+weights = (1 / torch.Tensor(reciprocal_weights))
+sampler = torch.utils.data.sampler.WeightedRandomSampler(weights, len(dataset))
 
 train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=args.batch_size, shuffle=args.shuffle,
+    train_dataset, batch_size=args.batch_size, sampler=sampler,
     num_workers=args.number_of_workers, pin_memory=args.no_pin_memory)
 
 val_loader = torch.utils.data.DataLoader(
