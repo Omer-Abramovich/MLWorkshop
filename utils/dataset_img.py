@@ -14,10 +14,10 @@ class VideoDataset(torch.utils.data.Dataset):
         self.args = args
         self.transform = transform
 
+        self.image_paths = []
+        self.index2video = []
         self.targets = []
         self.audios = []
-
-        self.video_index = None
 
         self.video = None
         self.targets = None
@@ -28,6 +28,7 @@ class VideoDataset(torch.utils.data.Dataset):
         #     self.target_files = torch.load('target_files.pth')
         #     self.save = False
 
+        video_index = 0
         if self.save:
             print('Scanning for files...')
             for x in Path(base_path).glob('**/Infant/resized.mp4'):
@@ -35,14 +36,22 @@ class VideoDataset(torch.utils.data.Dataset):
                 print(path_str)
                 target_path = '/'.join(path_str.split('/')[:-1]) + '/Targets.pth'
                 audio_path = '/'.join(path_str.split('/')[:-1]) + '/audio.pth'
+                frames_path = '/'.join(path_str.split('/')[:-1]) + '/Frames'
 
                 target = torch.load(target_path)
                 audio = torch.load(audio_path)
-                print(target.size(), audio.size())
+                self.audios.append(audio)
+                self.targets.append(target)
+                for img_path in os.listdir(frames_path):
+                    print(img_path)
+                    self.image_paths.append(img_path)
+                    self.index2video.append(video_index)
+
+                video_index+=1
 
             torch.save(self.video_files, 'video_files.pth')
-            torch.save(self.audio_files, 'audio_files.pth')
-            torch.save(self.target_files, 'target_files.pth')
+            torch.save(self.audio_files, 'audios.pth')
+            torch.save(self.target_files, 'targets.pth')
 
     def load_video_if_needed(self, index):
         if not (self.video_index is not None and index < self.cumulative_lengths[self.video_index] and \
