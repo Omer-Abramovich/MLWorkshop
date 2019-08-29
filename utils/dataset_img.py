@@ -30,7 +30,7 @@ class VideoDataset(torch.utils.data.Dataset):
 
         if self.save:
             print('Scanning for files...')
-            for x in Path(base_path).glob('**/Infant/Frames'):
+            for x in Path(base_path).glob('**/Infant/resized.mp4'):
                 path_str = str(x)
                 print(path_str)
                 target_path = '/'.join(path_str.split('/')[:-2]) + '/Targets.pth'
