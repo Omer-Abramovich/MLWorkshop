@@ -91,16 +91,22 @@ prob[:, 1] = (counts / all_targets.size(0))
 
 print(prob)
 
-reciprocal_weights = []
-# class[i] = list containing class present at index i in the dataset
-for index in range(len(train_dataset)):
-    frame, audio, target = train_dataset[index]
-    total_prob = 1
-    for label in range(all_targets.size(1)):
-        total_prob *= prob[label, int(target[label].item())]
-    reciprocal_weights.append(total_prob)
+if not os.path.exists('weights.pth'):
+    reciprocal_weights = []
+    # class[i] = list containing class present at index i in the dataset
+    for index in range(len(train_dataset)):
+        frame, audio, target = train_dataset[index]
+        total_prob = 1
+        for label in range(all_targets.size(1)):
+            total_prob *= prob[label, int(target[label].item())]
+        reciprocal_weights.append(total_prob)
+        print(index)
 
-weights = (1 / torch.Tensor(reciprocal_weights))
+    weights = (1 / torch.Tensor(reciprocal_weights))
+    torch.save(weights, 'weights.pth')
+else:
+    weights = torch.load('weights.pth')
+
 sampler = torch.utils.data.sampler.WeightedRandomSampler(weights, len(dataset))
 
 train_loader = torch.utils.data.DataLoader(
