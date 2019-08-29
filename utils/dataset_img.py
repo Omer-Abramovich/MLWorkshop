@@ -36,19 +36,29 @@ class VideoDataset(torch.utils.data.Dataset):
                 frames_path = '/'.join(path_str.split('/')[:-1]) + '/Frames'
 
                 target = torch.load(target_path)
-                audio = torch.load(audio_path)
+                audio = torch.load(audio_path).float()
+
+                audio_trans = transforms.Compose([
+                    transforms.ToPILImage(),
+                    transforms.Scale((self.targets.size(0), self.args.crop_size)),
+                    transforms.ToTensor()
+                ])
+
+                audio = audio_trans(audio.mean(0))
+
                 self.audios.append(audio)
                 self.targets.append(target)
                 for img_path in os.listdir(frames_path):
-                    print(img_path)
                     self.image_paths.append(img_path)
                     self.index2video.append(video_index)
 
                 video_index+=1
 
-            torch.save(self.video_files, 'video_files.pth')
-            torch.save(self.audio_files, 'audios.pth')
-            torch.save(self.target_files, 'targets.pth')
+            torch.save(self.image_paths, 'image_paths.pth')
+            torch.save(self.audios, 'audios.pth')
+            torch.save(self.targets, 'targets.pth')
+            torch.save(self.index2video, 'index2video.pth')
+
 
     def load_video_if_needed(self, index):
         if not (self.video_index is not None and index < self.cumulative_lengths[self.video_index] and \
