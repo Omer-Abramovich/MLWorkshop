@@ -208,6 +208,8 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     outputs = act(model(inputs))
 
                     preds = torch.round(outputs)
+                    print(outputs)
+                    print(labels)
                     loss = criterion(outputs, labels)
 
                     merged_weights = (labels == 0).float() * wights[:, 0] + (labels == 1).float() * wights[:, 1]
