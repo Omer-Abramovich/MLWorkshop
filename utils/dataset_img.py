@@ -19,9 +19,6 @@ class VideoDataset(torch.utils.data.Dataset):
         self.targets = []
         self.audios = []
 
-        self.video = None
-        self.targets = None
-
         self.save = True
         # if os.path.exists('video_files.pth'):
         #     self.audio_files = torch.load('audio_files.pth')
