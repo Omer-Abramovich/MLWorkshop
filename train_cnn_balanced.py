@@ -96,9 +96,8 @@ reciprocal_weights = []
 for index in range(len(train_dataset)):
     frame, audio, target = train_dataset[index]
     total_prob = 1
-    print(target)
     for label in range(all_targets.size(1)):
-        total_prob *= prob[label, target[label]]
+        total_prob *= prob[label, target[label].item()]
     reciprocal_weights.append(total_prob)
 
 weights = (1 / torch.Tensor(reciprocal_weights))
