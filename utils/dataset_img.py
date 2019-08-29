@@ -23,10 +23,10 @@ class VideoDataset(torch.utils.data.Dataset):
         self.targets = None
 
         self.save = True
-        if os.path.exists('video_files.pth'):
-            self.audio_files = torch.load('audio_files.pth')
-            self.target_files = torch.load('target_files.pth')
-            self.save = False
+        # if os.path.exists('video_files.pth'):
+        #     self.audio_files = torch.load('audio_files.pth')
+        #     self.target_files = torch.load('target_files.pth')
+        #     self.save = False
 
         if self.save:
             print('Scanning for files...')
