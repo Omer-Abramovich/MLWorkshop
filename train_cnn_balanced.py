@@ -183,7 +183,6 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             for data in dataloaders[phase]:
                 # print('loaded data')
                 frame, audio, labels = data
-                print(frame.size(), audio.size(), labels.size())
 
                 if args.frames:
                     frame = frame.to(device)
@@ -208,8 +207,6 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     outputs = act(model(inputs))
 
                     preds = torch.round(outputs)
-                    print(outputs[0])
-                    print(labels[0])
                     loss = criterion(outputs, labels)
 
                     merged_weights = (labels == 0).float() * wights[:, 0] + (labels == 1).float() * wights[:, 1]
