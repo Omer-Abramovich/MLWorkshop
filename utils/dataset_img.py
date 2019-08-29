@@ -33,17 +33,13 @@ class VideoDataset(torch.utils.data.Dataset):
             for x in Path(base_path).glob('**/Infant/resized.mp4'):
                 path_str = str(x)
                 print(path_str)
-                target_path = '/'.join(path_str.split('/')[:-2]) + '/Targets.pth'
-                audio_path = '/'.join(path_str.split('/')[:-2]) + '/audio.pth'
+                target_path = '/'.join(path_str.split('/')[:-1]) + '/Targets.pth'
+                audio_path = '/'.join(path_str.split('/')[:-1]) + '/audio.pth'
 
-
-                self.audio_files.append(audio_path)
-                self.target_files.append(target_path)
-
-                video = moviepy.editor.VideoFileClip(path_str)
                 target = torch.load(target_path)
-                video.fps = target.size(0) / video.duration
-                frames = math.floor(video.duration * video.fps)
+                audio = torch.load(audio_path)
+                print(target.size(), audio.size())
+
             torch.save(self.video_files, 'video_files.pth')
             torch.save(self.audio_files, 'audio_files.pth')
             torch.save(self.target_files, 'target_files.pth')
