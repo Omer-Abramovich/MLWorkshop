@@ -6,6 +6,7 @@ from PIL import Image
 from torchvision import datasets, models, transforms
 import math
 
+
 class VideoDataset(torch.utils.data.Dataset):
 
     def __init__(self, base_path, args, transform=None):
@@ -13,11 +14,9 @@ class VideoDataset(torch.utils.data.Dataset):
         self.args = args
         self.transform = transform
 
-        self.video_files = []
-        self.target_files = []
-        self.audio_files = []
+        self.targets = []
+        self.audios = []
 
-        self.cumulative_lengths = []
         self.video_index = None
 
         self.video = None
@@ -25,20 +24,19 @@ class VideoDataset(torch.utils.data.Dataset):
 
         self.save = True
         if os.path.exists('video_files.pth'):
-            self.video_files = torch.load('video_files.pth')
             self.audio_files = torch.load('audio_files.pth')
             self.target_files = torch.load('target_files.pth')
             self.save = False
 
         if self.save:
             print('Scanning for files...')
-            for x in Path(base_path).glob('**/Infant/resized.mp4'):
+            for x in Path(base_path).glob('**/Infant/Frames'):
                 path_str = str(x)
                 print(path_str)
-                target_path = '/'.join(path_str.split('/')[:-1]) + '/Targets.pth'
-                audio_path = '/'.join(path_str.split('/')[:-1]) + '/audio.pth'
+                target_path = '/'.join(path_str.split('/')[:-2]) + '/Targets.pth'
+                audio_path = '/'.join(path_str.split('/')[:-2]) + '/audio.pth'
 
-                self.video_files.append(path_str)
+
                 self.audio_files.append(audio_path)
                 self.target_files.append(target_path)
 
