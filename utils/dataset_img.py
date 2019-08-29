@@ -40,7 +40,7 @@ class VideoDataset(torch.utils.data.Dataset):
 
                 audio_trans = transforms.Compose([
                     transforms.ToPILImage(),
-                    transforms.Scale((self.targets.size(0), self.args.crop_size)),
+                    transforms.Scale((target.size(0), self.args.crop_size)),
                     transforms.ToTensor()
                 ])
 
@@ -58,28 +58,6 @@ class VideoDataset(torch.utils.data.Dataset):
             torch.save(self.audios, 'audios.pth')
             torch.save(self.targets, 'targets.pth')
             torch.save(self.index2video, 'index2video.pth')
-
-
-    def load_video_if_needed(self, index):
-        if not (self.video_index is not None and index < self.cumulative_lengths[self.video_index] and \
-                (self.video_index == 0 or index > self.cumulative_lengths[self.video_index - 1])):
-            for self.video_index in range(len(self.cumulative_lengths)):
-                if index < self.cumulative_lengths[self.video_index] and (
-                        self.video_index == 0 or index >= self.cumulative_lengths[self.video_index - 1]):
-                    # print('Loading video',self.video_index)
-                    self.video = moviepy.editor.VideoFileClip(self.video_files[self.video_index])
-                    self.targets = torch.load(self.target_files[self.video_index]).float()
-                    self.video.fps = self.targets.size(0) / self.video.duration
-
-                    audio_trans = transforms.Compose([
-                        transforms.ToPILImage(),
-                        transforms.Scale((self.targets.size(0), self.args.crop_size)),
-                        transforms.ToTensor()
-                    ])
-
-                    a = torch.load(self.audio_files[self.video_index]).float()
-                    self.audio = audio_trans(a.mean(0))
-                    break
 
     def __getitem__(self, index):
         self.load_video_if_needed(index)
