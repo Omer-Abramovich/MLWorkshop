@@ -65,6 +65,7 @@ class VideoDataset(torch.utils.data.Dataset):
             torch.save(self.index2video, 'index2video.pth')
 
     def __getitem__(self, index):
+        print(self.image_paths[index])
         frame_no = int(self.image_paths[index].split('/')[-1].split('.')[0])
         frame = Image.open(self.image_paths[index])
 
