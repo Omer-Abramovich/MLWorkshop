@@ -183,6 +183,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             for data in dataloaders[phase]:
                 # print('loaded data')
                 frame, audio, labels = data
+                print(frame.size(), audio.size(), labels.size())
 
                 if args.frames:
                     frame = frame.to(device)

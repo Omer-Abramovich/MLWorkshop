@@ -38,7 +38,7 @@ class VideoDataset(torch.utils.data.Dataset):
                 audio_path = '/'.join(path_str.split('/')[:-1]) + '/audio.pth'
                 frames_path = '/'.join(path_str.split('/')[:-1]) + '/Frames'
 
-                target = torch.load(target_path)
+                target = torch.load(target_path).float()
                 audio = torch.load(audio_path).float()
 
                 audio_trans = transforms.Compose([
