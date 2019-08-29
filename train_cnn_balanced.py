@@ -56,16 +56,6 @@ transform = transforms.Compose([
 print('Creating dataset')
 dataset = utils.dataset_img.VideoDataset(args.base_path, args, transform)
 
-def test():
-    i = 0
-    for data in dataset:
-        i+=1
-        if i == 1000:
-            break
-
-test()
-exit(1)
-
 train_len = int(args.train_portion * len(dataset))
 val_len = int(args.validation_portion * len(dataset))
 test_len = len(dataset) - train_len - val_len
@@ -87,10 +77,7 @@ else:
 
 print('Counting targets')
 
-target_tensors = []
-for target_file in dataset.target_files:
-    target_tensors.append(torch.load(target_file))
-all_targets = torch.cat(target_tensors, 0)
+all_targets = torch.cat(dataset.targets, 0)
 
 print(all_targets.size())
 
