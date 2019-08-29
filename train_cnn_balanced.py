@@ -56,9 +56,14 @@ transform = transforms.Compose([
 print('Creating dataset')
 dataset = utils.dataset_img.VideoDataset(args.base_path, args, transform)
 
-for data in dataset:
-    continue
+def test():
+    i = 0
+    for data in dataset:
+        i+=1
+        if i == 1000:
+            break
 
+test()
 exit(1)
 
 train_len = int(args.train_portion * len(dataset))
