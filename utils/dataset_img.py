@@ -20,10 +20,13 @@ class VideoDataset(torch.utils.data.Dataset):
         self.audios = []
 
         self.save = True
-        # if os.path.exists('video_files.pth'):
-        #     self.audio_files = torch.load('audio_files.pth')
-        #     self.target_files = torch.load('target_files.pth')
-        #     self.save = False
+        if os.path.exists('image_paths.pth'):
+            self.image_paths = torch.load('image_paths.pth')
+            self.audios = torch.load('audios.pth')
+            self.targets = torch.load('targets.pth')
+            self.index2video = torch.load('index2video.pth')
+
+            self.save = False
 
         video_index = 0
         if self.save:
@@ -48,7 +51,9 @@ class VideoDataset(torch.utils.data.Dataset):
 
                 self.audios.append(audio)
                 self.targets.append(target)
-                for img_path in os.listdir(frames_path):
+                for i in range(target.size(0)):
+                    img_path = frames_path + '/' + str(i) + '.png'
+
                     self.image_paths.append(img_path)
                     self.index2video.append(video_index)
 
@@ -60,29 +65,26 @@ class VideoDataset(torch.utils.data.Dataset):
             torch.save(self.index2video, 'index2video.pth')
 
     def __getitem__(self, index):
-        self.load_video_if_needed(index)
-        if self.video_index > 0:
-            frame_no = index - self.cumulative_lengths[self.video_index - 1]
-        else:
-            frame_no = index
-        frame = self.video.get_frame(frame_no / self.video.fps)
-        frame = Image.fromarray(frame.astype('uint8'), 'RGB')
+        frame_no = int(self.image_paths[index].split('/')[-1].split('.')[0])
+        frame = Image.open(self.image_paths[index])
 
         if self.transform:
             frame = self.transform(frame)
 
-        target = self.targets[frame_no]
+        video_audio = self.audios[self.index2video[index]]
+        target = self.targets[self.index2video[index]][frame_no]
+
         audio = torch.zeros(1, self.args.crop_size, self.args.crop_size)
         half = int(self.args.crop_size / 2)
         if frame_no < half:
-            audio[:, half - frame_no:] = self.audio[:, :half + frame_no]
-        if frame_no >= half and frame_no + half < self.audio.size(1):
-            audio = self.audio[:, frame_no - half:frame_no + half]
-        if frame_no + half >= self.audio.size(1):
-            delta = self.audio.size(1) - frame_no
-            audio[:, :half + delta] = self.audio[:, frame_no - half:]
+            audio[:, half - frame_no:] = video_audio[:, :half + frame_no]
+        if frame_no >= half and frame_no + half < video_audio.size(1):
+            audio = video_audio[:, frame_no - half:frame_no + half]
+        if frame_no + half >= video_audio.size(1):
+            delta = video_audio.size(1) - frame_no
+            audio[:, :half + delta] = video_audio[:, frame_no - half:]
 
         return frame, audio, target
 
     def __len__(self):
-        return int(self.cumulative_lengths[-1])
+        return len(self.image_paths)
