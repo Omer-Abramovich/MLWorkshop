@@ -123,8 +123,6 @@ test_loader = torch.utils.data.DataLoader(
 
 device = torch.device(args.GPU_device if (args.use_cuda and torch.cuda.is_available()) else 'cpu')
 
-wights = wights.to(device)
-
 print('Creating model')
 NUM_CLASSES = args.number_of_classes
 
@@ -223,8 +221,6 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     preds = torch.round(outputs)
                     loss = criterion(outputs, labels)
 
-                    merged_weights = (labels == 0).float() * wights[:, 0] + (labels == 1).float() * wights[:, 1]
-                    loss = loss * merged_weights
                     loss = loss.mean()
                     # print('batch loss', loss.item())
 
