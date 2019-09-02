@@ -26,12 +26,11 @@ parser.add_argument('--no_pin_memory', action='store_false')
 parser.add_argument('--number_of_classes', type=int, default=15)
 parser.add_argument('--number_of_workers', type=int, default=4)
 parser.add_argument('--epochs', type=int, default=1)
-parser.add_argument('--save_path', type=str, default='testSaving.pth')
 parser.add_argument('--max_epoch_size', type=int, default=0)
 parser.add_argument('--frames', action='store_true')
 parser.add_argument('--audio', action='store_true')
-parser.add_argument('--load_path', type=str, default='testSaving.pth')
-
+parser.add_argument('--load_path', type=str, default='/mnt/models/cnn_audio_final.pth.epoch.9')
+parser.add_argument('--save_path', type=str, default='confusion_matrix_audio.pth')
 args = parser.parse_args()
 
 device = torch.device(args.GPU_device if (args.use_cuda and torch.cuda.is_available()) else 'cpu')
@@ -71,6 +70,10 @@ else:
     torch.save(test_dataset.indices, 'test_dataset_indices.pth')
 
 NUM_CLASSES = args.number_of_classes
+
+train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=args.shuffle,
+        num_workers=args.number_of_workers, pin_memory=args.no_pin_memory)
 
 test_loader = torch.utils.data.DataLoader(
     test_dataset, batch_size=args.batch_size, shuffle=args.shuffle,
@@ -128,7 +131,7 @@ def test_model(model):
 
             print("frames", total_frames)
 
-    torch.save(confusion_matrix, 'confusion_matrix.pth')
+    torch.save(confusion_matrix, args.save_path)
 
     for label in range(NUM_CLASSES):
         print('Accuracy of label %1d : %2d %%' % (
